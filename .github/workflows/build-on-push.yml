@@ -1,0 +1,40 @@
+name: 'Build on Push'
+
+on: push
+
+jobs:
+
+  build:
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - name: Install dependencies
+      run: |
+        go get ./cmd/nanomdm
+        go get ./cmd/nano2nano
+
+    - name: Build
+      run: |
+        GOOS=linux GOARCH=${{ matrix.arch }} go build -o nanomdm -v ./cmd/nanomdm && \
+        GOOS=linux GOARCH=${{ matrix.arch }} go build -o nano2nano -v ./cmd/nano2nano
+
+    - name: Upload build
+      uses: actions/upload-artifact@v3
+      with:
+        name: nanomdm-linux-${{ matrix.arch }}
+        path: |
+          nanomdm
+          nano2nano
+          storage/mysql/schema*
+          storage/pgsql/schema*
+          tools/*
+          docs/enroll.mobileconfig
